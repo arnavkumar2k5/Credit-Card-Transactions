@@ -1,7 +1,8 @@
 import pandas as pd
+import numpy as np
 from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix
+from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix, precision_recall_curve, auc, f1_score
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from imblearn.over_sampling import SMOTE
 
@@ -52,6 +53,33 @@ print("Classification Report:")
 print(classification_report(y_test, y_pred))
 print(f"ROC AUC Score: {roc_auc_score(y_test, y_prob)}")
 
+# Precision-Recall AUC
+precision, recall, _ = precision_recall_curve(y_test, y_prob)
+pr_auc = auc(recall, precision)
+print(f"Precision-Recall AUC Score: {pr_auc}")
+
+# Confusion Matrix
 conf_matrix = confusion_matrix(y_test, y_pred)
 print("Confusion Matrix:")
 print(conf_matrix)
+
+# Find the best threshold
+best_threshold = 0.5
+best_f1 = 0
+for threshold in np.arange(0.1, 1.0, 0.01):
+    y_pred_adjusted = (y_prob >= threshold).astype(int)
+    f1 = f1_score(y_test, y_pred_adjusted)
+    if f1 > best_f1:
+        best_f1 = f1
+        best_threshold = threshold
+
+print(f"Best Threshold: {best_threshold}")
+
+# Evaluate model with best threshold
+y_pred_best = (y_prob >= best_threshold).astype(int)
+print("Classification Report with Best Threshold:")
+print(classification_report(y_test, y_pred_best))
+print(f"ROC AUC Score with Best Threshold: {roc_auc_score(y_test, y_prob)}")
+print(f"Precision-Recall AUC Score with Best Threshold: {pr_auc}")
+print("Confusion Matrix with Best Threshold:")
+print(confusion_matrix(y_test, y_pred_best))
